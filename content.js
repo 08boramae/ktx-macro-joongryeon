@@ -141,13 +141,40 @@ const macro = () => {
           .querySelector("td:nth-child(6)")
           .querySelector('[src="/docs/2007/img/common/icon_apm_rd.gif"]');
 
-      if ($button) {
-        $button.closest("a").click();
-        localStorage.removeItem("macro");
-        chrome.extension.sendMessage({ type: "successTicketing" });
-        break;
+        if ($button) {
+          $button.closest("a").click();
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              const iframe = document.querySelector("#embeded-modal-traininfo");
+              if (iframe) {
+                console.log("iframe이 로드되었습니다.");
+                observer.disconnect(); // 더 이상 감지하지 않음
+                handleIframe(iframe);
+              }
+            });
+          });
+          
+          // body 또는 특정 부모 요소 감시
+          observer.observe(document.body, { childList: true, subtree: true });
+          
+          function handleIframe(iframe) {
+            iframe.addEventListener("load", () => {
+              const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+              const btn = iframeDoc.querySelector(".btn_blue_ang");
+              if (btn) {
+                btn.click();
+                console.log("버튼 클릭 완료");
+              } else {
+                console.warn("iframe 내부에 버튼을 찾을 수 없습니다.");
+              }
+            });
+          }
+          
+          localStorage.removeItem("macro");
+          chrome.extension.sendMessage({ type: "successTicketing" });
+          break;
+        }
       }
-    }
 
     if (isChecked(++uid)) {
       $row.querySelector("td:nth-child(10)").style.backgroundColor = "#f03e3e";
